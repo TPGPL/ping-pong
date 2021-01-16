@@ -11,7 +11,7 @@ git clone https://github.com/TPGPL/ping-pong.git
 ```
 
 2. Set up a virtual environment and activate it.
-   
+
 ```bash
 python -m venv venv
 
@@ -23,7 +23,7 @@ source venv/scripts/activate
 ```
 
 3. Install the module.
-   
+
 ```bash
 pip install ping-pong
 ```

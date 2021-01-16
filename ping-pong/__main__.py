@@ -8,10 +8,10 @@ import time
 
 from pyfiglet import Figlet
 
-from defaults import *
-from player import Player
-from rule import Rule
-from score import Score
+from .defaults import *
+from .player import Player
+from .rule import Rule
+from .score import Score
 
 
 # UTILITY FUNCTIONS

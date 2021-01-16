@@ -1,4 +1,4 @@
-from rule import Rule
+from .rule import Rule
 
 default_round_count = 3
 default_rules = [Rule("5", "ping", "DIVISION"), Rule("7", "pong", "DIVISION")]
