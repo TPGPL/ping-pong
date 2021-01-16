@@ -9,6 +9,7 @@ import time
 from pyfiglet import Figlet
 
 from defaults import *
+from rule import Rule
 from score import Score
 
 
@@ -259,32 +260,23 @@ def settings_menu():
     choice = input().lower()
 
     if choice == "1":
-        return 0
-        # dodajZasade() #TODO
+        add_rule()
     elif choice == "2":
-        return 0
-        # wyczyscZasady() #TODO
+        clear_rules()
     elif choice == "3":
-        return 0
-        # usunZasade() #TODO
+        remove_rule()
     elif choice == "4":
-        return 0
-        # ustawLiczbeRund() #TODO
+        set_round_count()
     elif choice == "5":
-        return 0
-        # ustawCzasTury() #TODO
+        set_tour_time()
     elif choice == "6":
-        return 0
-        # ustawOdstepTur() #TODO
+        set_tour_interval()
     elif choice == "7":
-        return 0
-        # wyswietlajListeZasad() #TODO
+        display_rule_list()
     elif choice == "8":
-        return 0
-        # przywrocWartosciDomyslne() #TODO
+        revert_to_default()
     elif choice == "9":
-        return 0
-        # wyczyscRankingi() #TODO
+        clear_rankings()
     elif choice == "b":
         main_menu()
     else:
@@ -450,6 +442,310 @@ def view_ranking(game_difficulty):
     print("\nPress any key to return to the ranking list...")
     input()
     ranking_list_menu()
+
+
+# SETTINGS
+
+def add_rule():
+    global rules
+    draw_logo()
+    while True:
+        kind = input("Choose the type of a new rule (available types: DIVISION, REPLACEMENT): ").lower()
+
+        if kind == "division" or kind == "replacement":
+            break
+        elif kind == "b":
+            settings_menu()
+        else:
+            draw_logo()
+            print("Wrong choice - try again.")
+
+    if kind == "replacement":
+        while True:
+            while True:
+                try:
+                    number = int(input("Enter a number to replace: "))
+                    if number < 1:
+                        raise ValueError
+                    break
+                except ValueError:
+                    draw_logo()
+                    print("Wrong choice - try again.")
+
+            number = str(number)
+
+            while True:
+                replacement = input("Enter the number's replacement: ")
+
+                if replacement == "":
+                    draw_logo()
+                    print(f"Enter a number to replace: {number}")
+                    print("Number replacement can't be empty.")
+                else:
+                    break
+
+            if check_repetitions(Rule(number, replacement, "REPLACEMENT"), rules):
+                draw_logo()
+                print("You can't add two replacements for one number.")
+            else:
+                break
+        rules.append(Rule(number, replacement, "REPLACEMENT"))
+    else:
+        while True:
+            while True:
+                try:
+                    divisor = int(input("Enter the number divisor: "))
+                    if divisor < 1:
+                        raise ValueError
+                    break
+                except ValueError:
+                    draw_logo()
+                    print("Wrong choice - try again.")
+
+            divisor = str(divisor)
+
+            while True:
+                replacement = input("Enter the replacement of divisible numbers: ")
+
+                if replacement == "":
+                    draw_logo()
+                    print(f"Enter the number divisor: {divisor}")
+                    print("Number replacement can't be empty.")
+                else:
+                    break
+
+            if check_repetitions(Rule(divisor, replacement, "DIVISION"), rules):
+                draw_logo()
+                print("You can't add two replacements for one divisor.")
+            else:
+                break
+        rules.append(Rule(divisor, replacement, "DIVISION"))
+
+    print("A new rule has been added!")
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
+
+
+def clear_rules():
+    choice = confirmation()
+
+    if not choice:
+        settings_menu()
+    else:
+        pass
+
+    global rules
+    rules.clear()
+
+    draw_logo()
+    print("The rule list has been cleared!")
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
+
+
+def set_round_count():
+    global round_count
+    draw_logo()
+    while True:
+        try:
+            choice = input("Enter an odd round count: ")
+
+            if choice.lower() == "b":
+                settings_menu()
+
+            choice = int(choice)
+
+            if choice % 2 == 0 or choice < 1:
+                raise ValueError
+            break
+        except ValueError:
+            draw_logo()
+            print("Wrong choice - try again.")
+
+    round_count = choice
+    print(f"The round count has been changed to {round_count}!")
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
+
+
+def set_tour_time():
+    global tour_time
+    draw_logo()
+    while True:
+        try:
+            choice = input("Enter the length of a single tour: ")
+
+            if choice.lower() == "b":
+                settings_menu()
+
+            choice = float(choice)
+
+            if choice <= 0:
+                raise ValueError
+            break
+        except ValueError:
+            draw_logo()
+            print("Wrong choice - try again.")
+
+    tour_time = choice
+    print(f"The length of a single tour has been changed to {tour_time}s!")
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
+
+
+def set_tour_interval():
+    global tour_interval
+    draw_logo()
+    while True:
+        try:
+            choice = input("Enter the length of the interval between tours: ")
+
+            if choice.lower() == "b":
+                settings_menu()
+
+            choice = float(choice)
+
+            if choice < 0:
+                raise ValueError
+            break
+        except ValueError:
+            draw_logo()
+            print("Wrong choice - try again.")
+
+    tour_interval = choice
+    print(f"The length of the interval between tours has been changed to {tour_interval}s!")
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
+
+
+def revert_to_default():
+    choice = confirmation()
+
+    if not choice:
+        settings_menu()
+    else:
+        pass
+
+    global round_count
+    global rules
+    global tour_time
+    global difficulty
+    global tour_interval
+    global show_rules
+
+    round_count = default_round_count
+    rules = default_rules.copy()
+    tour_time = default_tour_time
+    difficulty = default_difficulty
+    tour_interval = default_tour_interval
+    show_rules = default_show_rules
+
+    draw_logo()
+    print("All settings have been reverted to default!")
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
+
+
+def display_rule_list():
+    global show_rules
+    draw_logo()
+
+    while True:
+        choice = input("Do you want the rule list to be displayed in the game menu? (Y/N)\n").lower()
+
+        if choice == "y" or choice == "yes":
+            show_rules = True
+            break
+        elif choice == "n" or choice == "no":
+            show_rules = False
+            break
+        elif choice == "b":
+            settings_menu()
+        else:
+            draw_logo()
+            print("Wrong choice - try again.")
+
+    if show_rules:
+        print("The rule list will be displayed in the game menu!")
+    else:
+        print("The rule list won't be displayed in the game menu!")
+
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
+
+
+def clear_rankings():
+    choice = confirmation()
+
+    if not choice:
+        settings_menu()
+    else:
+        pass
+
+    for kind in ["E", "M", "H"]:
+        with io.open("assets/ranking-{x}.txt".format(x=kind), mode="r+", encoding="utf-8") as file:
+            file.truncate(0)
+
+    print("All rankings have been cleared!")
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
+
+
+def remove_rule():
+    global rules
+    draw_logo()
+
+    if not rules:
+        print("The rule list is empty.")
+        print("\nPress any key to return to the settings...")
+        input()
+        settings_menu()
+
+    while True:
+        counter = 0
+        print("Rules:")
+
+        for rule in rules:
+            counter += 1
+
+            if rule.kind == "REPLACEMENT":
+                print(f"{counter}. {rule.number} is replaced with {rule.replacement}")
+            elif rule.kind == "DIVISION":
+                print(f"{counter}. Numbers divisible by {rule.number} are replaced with {rule.replacement}")
+
+        try:
+            rule_number = input("\nEnter the number of a rule to remove: ")
+            if rule_number.lower() == "b":
+                settings_menu()
+
+            rule_number = int(rule_number)
+            if rule_number < 1 or rule_number > counter:
+                raise ValueError
+            else:
+                choice = confirmation()
+
+                if not choice:
+                    remove_rule()
+                else:
+                    break
+        except ValueError:
+            draw_logo()
+            print("Wrong choice - try again.")
+
+    rules.pop(rule_number - 1)
+
+    print(f"The rule with number {rule_number} has been removed!")
+    print("\nPress any key to return to the settings...")
+    input()
+    settings_menu()
 
 
 # MODULE START
