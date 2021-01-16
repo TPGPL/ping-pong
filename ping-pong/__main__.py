@@ -690,7 +690,7 @@ def clear_rankings():
         pass
 
     for kind in ["E", "M", "H"]:
-        with io.open("assets/ranking-{x}.txt".format(x=kind), mode="r+", encoding="utf-8") as file:
+        with io.open(f"assets/ranking-{kind}.txt", mode="r+", encoding="utf-8") as file:
             file.truncate(0)
 
     print("All rankings have been cleared!")
