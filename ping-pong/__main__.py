@@ -142,7 +142,7 @@ def check_rankings(difficulties):
                 file.truncate(0)
 
     if errors_found:
-        print("Click any key to continue...")
+        print("Press a key to continue...")
         input()
 
 
