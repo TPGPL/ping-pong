@@ -9,6 +9,7 @@ import time
 from pyfiglet import Figlet
 
 from defaults import *
+from player import Player
 from rule import Rule
 from score import Score
 
@@ -183,6 +184,342 @@ def generate_answer():
 
 def get_words(game_difficulty):
     return words_E if game_difficulty == "E" else words_M if game_difficulty == "M" else words_H
+
+
+# ROZGRYWKA
+
+def solo_game():
+    global rules
+    life_count = set_life_count(difficulty)
+    score = 0
+    number_counter = 1
+
+    while True:
+        wrong_input = False
+        correct_answer = check_number(number_counter, rules)
+        draw_logo()
+
+        start_time = time.time()
+        player_input = input("Enter the expression: ")
+        end_time = time.time()
+
+        time.sleep(tour_interval)
+
+        if player_input != correct_answer or end_time - start_time > tour_time:
+            wrong_input = True
+            life_count -= 1
+        else:
+            score += 1
+
+        if life_count == 0:
+            break
+
+        if wrong_input:
+            draw_logo()
+            if end_time - start_time > tour_time:
+                print(f"Time out! Remaining lives: {life_count}. The correct answer was {correct_answer}")
+            else:
+                print(f"Wrong! Remaining lives: {life_count}. The correct answer was {correct_answer}")
+
+            print("\nPress any key to continue...")
+            input()
+
+        number_counter += 1
+
+    draw_logo()
+    while True:
+        player_name = input("Enter your name: ")
+
+        if " " in player_name or player_name == "":
+            draw_logo()
+            print("Player name cannot contain spaces or be empty!")
+        else:
+            check_rankings([difficulty])
+            ranking = fetch_ranking(difficulty)
+            ranking.append(Score(score, player_name))
+            save_ranking(ranking, difficulty)
+            print("Your score has been saved in the ranking!\n")
+            time.sleep(1)
+            break
+
+    print("GAME OVER")
+    print(f"You have scored {score} points!")
+    print("\nPress any key to add a replacement rule...")
+    print("B - Return to the game menu")
+
+    wybor = input().lower()
+
+    if wybor == "b":
+        game_menu()
+    else:
+        draw_logo()
+        while True:
+            while True:
+                try:
+                    number = int(input("Enter a number to replace: "))
+                    if number < 1:
+                        raise ValueError
+                    break
+                except ValueError:
+                    draw_logo()
+                    print("Wrong choice - try again.")
+            number = str(number)
+            replacement = input("Enter the number's replacement: ")
+
+            if check_repetitions(Rule(number, replacement, "REPLACEMENT"), rules):
+                draw_logo()
+                print("You can't add two replacements for one number.")
+            else:
+                break
+        rules.append(Rule(number, replacement, "REPLACEMENT"))
+
+        print("\nPress any key to return to the game menu...")
+        input()
+        game_menu()
+
+
+def pvp_game():
+    global rules
+    goal = round_count // 2 + 1
+    Player1 = Player("", 0)
+    Player2 = Player("", 0)
+    round_number = 1
+
+    draw_logo()
+    while True:
+        Player1.name = input("Enter first player's name: ")
+
+        if Player1.name == "":
+            draw_logo()
+            print("Player's name cannot be empty!")
+        else:
+            break
+
+    while True:
+        Player2.name = input("Enter second player's name: ")
+
+        if Player2.name == "":
+            draw_logo()
+            print("Player's name cannot be empty!")
+        elif Player1.name == Player2.name:
+            draw_logo()
+            print("Players' names cannot be equal!")
+        else:
+            break
+
+    while True:
+        draw_logo()
+        print(f"Press any key to start round {round_number}...")
+        input()
+        turn = 1
+        number_counter = 1
+
+        while True:
+            turn = (turn + 1) % 2
+            correct_answer = check_number(number_counter, rules)
+            wrong_input = False
+            current_player = Player1 if turn == 0 else Player2
+            opponent = Player2 if turn == 0 else Player1
+            draw_logo()
+
+            start_time = time.time()
+            player_input = input(f"{current_player.name}: ")
+            end_time = time.time()
+
+            time.sleep(tour_interval)
+
+            if player_input != correct_answer or end_time - start_time > tour_time:
+                wrong_input = True
+                opponent.score += 1
+
+            if wrong_input:
+                draw_logo()
+                print(f"ROUND {round_number} FINISHED")
+                if end_time - start_time > tour_time:
+                    print(f"Time out! The correct answer was {correct_answer}.")
+                else:
+                    print(f"Wrong! The correct answer was {correct_answer}.")
+
+                print(f"{opponent.name} wins this round! The current score is {Player1.score}-{Player2.score}")
+                break
+
+            number_counter += 1
+
+        if Player1.score == goal or Player2.score == goal:
+            time.sleep(3)
+            break
+
+        round_number += 1
+
+        print("\nPress any key to add a replacement rule...")
+        input()
+
+        draw_logo()
+        while True:
+            while True:
+                try:
+                    number = int(input("Enter a number to replace: "))
+                    if number < 1:
+                        raise ValueError
+                    break
+                except ValueError:
+                    draw_logo()
+                    print("Wrong choice - try again.")
+            number = str(number)
+            replacement = input("Enter the number's replacement: ")
+
+            if check_repetitions(Rule(number, replacement, "REPLACEMENT"), rules):
+                draw_logo()
+                print("You can't add two replacements for one number.")
+            else:
+                break
+
+        rules.append(Rule(number, replacement, "REPLACEMENT"))
+
+        print(f"A new rule has been added ({number} is replaced with {replacement})!")
+        input()
+
+    winner = Player1 if Player1.score == goal else Player2
+    loser = Player1 if winner == Player2 else Player2
+
+    draw_logo()
+    print(f"{winner.name} WON THE GAME!")
+    print(f"{winner.name} wins the game against {loser.name}! Uzyskany wynik to {Player1.score}-{Player2.score}")
+
+    print("\nPress any key to return to the game menu...")
+    input()
+    game_menu()
+
+
+def pve_game():
+    global rules
+    goal = round_count // 2 + 1
+    Player1 = Player("", 0)
+    Computer = Player("Computer", 0)
+    round_number = 1
+
+    draw_logo()
+    while True:
+        Player1.name = input("Enter your name: ")
+
+        if Player1.name == "":
+            draw_logo()
+            print("Player's name cannot be empty!")
+        elif Player1.name == Computer.name:
+            draw_logo()
+            print("Players' names cannot be equal!")
+        else:
+            break
+
+    while True:
+        draw_logo()
+        print(f"Press any key to start round {round_number}...")
+        input()
+        turn = 1
+        number_counter = 1
+
+        while True:
+            turn = (turn + 1) % 2
+            correct_answer = check_number(number_counter, rules)
+            wrong_input = False
+            current_player = Player1 if turn == 0 else Computer
+            opponent = Computer if turn == 0 else Player1
+            draw_logo()
+
+            start_time = time.time()
+
+            if current_player == Player1:
+                player_input = input(f"{current_player.name}: ")
+            else:
+                should_be_correct = check_chance(number_counter)
+
+                print(f"{current_player.name}: ")
+                time.sleep(1 if tour_time > 2 else float(tour_time / 2))
+
+                draw_logo()
+
+                if should_be_correct:
+                    print(f"{current_player.name}: {correct_answer}")
+                    player_input = correct_answer
+                else:
+                    generated_answer = generate_answer()
+                    print(f"{current_player.name}: {generated_answer}")
+                    player_input = generated_answer
+
+            end_time = time.time()
+
+            time.sleep(tour_interval)
+
+            if player_input != correct_answer or end_time - start_time > tour_time:
+                wrong_input = True
+                opponent.score += 1
+
+            if wrong_input:
+                draw_logo()
+                print(f"ROUND {round_number} FINISHED")
+                if end_time - start_time > tour_time:
+                    print(f"Time out! The correct answer was {correct_answer}.")
+                else:
+                    print(f"Wrong! The correct answer was {correct_answer}.")
+
+                print(f"{opponent.name} wins this round! Obecny wynik wynosi {Player1.score}-{Computer.score}")
+                break
+
+            number_counter += 1
+
+        if Player1.score == goal or Computer.score == goal:
+            time.sleep(3)
+            break
+
+        round_number += 1
+
+        if current_player == Computer:
+            print("\nPress any key to add a replacement rule...")
+            input()
+
+            draw_logo()
+            while True:
+                while True:
+                    try:
+                        number = int(input("Enter a number to replace: "))
+                        if number < 1:
+                            raise ValueError
+                        break
+                    except ValueError:
+                        draw_logo()
+                        print("Wrong choice - try again.")
+                number = str(number)
+                replacement = input("Enter the number's replacement: ")
+
+                if check_repetitions(Rule(number, replacement, "REPLACEMENT"), rules):
+                    draw_logo()
+                    print("You can't add two replacements for one number.")
+                else:
+                    break
+
+        else:
+            while True:
+                number = random.randint(1, 100)
+                replacement = random.choice(get_words(difficulty))
+                if check_repetitions(Rule(number, replacement, "REPLACEMENT"), rules):
+                    pass
+                else:
+                    break
+
+        rules.append(Rule(number, replacement, "REPLACEMENT"))
+        print(f"A new rule has been added ({number} is replaced with {replacement})!")
+        input()
+
+    winner = Player1 if Player1.score == goal else Computer
+    loser = Player1 if winner == Computer else Computer
+
+    draw_logo()
+    print(f"{winner.name} WON THE GAME!")
+    print(f"{winner.name} wins the game against {loser.name}! The current score is {Player1.score}-{Computer.score}")
+
+    print("\nPress any key to return to the game menu...")
+    input()
+    game_menu()
 
 
 # MENU
@@ -363,8 +700,7 @@ def solo_menu():
     if choice == "b":
         game_menu()
     else:
-        return 0
-        # rozgrywykaSolo() #TODO
+        solo_game()
 
 
 def pve_menu():
@@ -378,8 +714,7 @@ def pve_menu():
     if choice == "b":
         game_menu()
     else:
-        return 0
-        # rozgrywkaPVE() #TODO
+        pve_game()
 
 
 def pvp_menu():
@@ -393,8 +728,7 @@ def pvp_menu():
     if choice == "b":
         game_menu()
     else:
-        return 0
-        # rozgrywkaPVP() #TODO
+        pvp_game()
 
 
 def ranking_list_menu():
